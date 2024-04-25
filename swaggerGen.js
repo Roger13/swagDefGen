@@ -116,31 +116,26 @@ function convert() {
     Global variables updated: 
     -outSwagger
     */
-    let schema = {};
-    let examples = new Set();
-    for (const entry of obj) {
-      for (const key of Object.keys(entry)) {
-        if (!Object.keys(schema).includes(key)) {
-          examples.add(entry);
-          schema[key] = entry[key];
+    outSwagger += indentator + '"type": "array",';
+    outSwagger += indentator + '"items": {';
+    // ---- Begin items scope ----
+    if (typeof arr[0] === 'object' &&
+        !Array.isArray(arr[0]) &&
+        arr[0] !== null) {
+      let schema = {};
+      for (const entry of arr) {
+        for (const key of Object.keys(entry)) {
+          if (!Object.keys(schema).includes(key)) {
+            schema[key] = entry[key];
+          }
         }
       }
+      conversorSelection(schema);
+    } else if (arr[0]) {
+      conversorSelection(arr[0])
     }
-
-    outSwagger += indentator + '"type": "array",';
-    // ---- Begin items scope ----
-    outSwagger += indentator + '"items": {';
-    conversorSelection(schema);
     outSwagger += indentator + "}";
     // ---- End items scope ----
-    // ---- Begin example scope ----
-    if (document.getElementById("requestExamples").checked) {
-      outSwagger += ","
-      outSwagger += indentator + '"example": ' + JSON.stringify(
-        Array.from(examples), null, '\t'
-      ).replaceAll('\n', indentator)
-    }
-    // ---- End example scope ----
   }
 
   function convertObject(obj) {
@@ -160,6 +155,7 @@ function convert() {
       outSwagger += indentator + '"format": "nullable"';
       return;
     }
+    let examples = {};
     // ---- Begin properties scope ----
     outSwagger += indentator + '"type": "object",';
     outSwagger += indentator + '"properties": {';
@@ -168,6 +164,7 @@ function convert() {
     for (var prop in obj) {
       // ---- Begin property type scope ----
       outSwagger += indentator + '"' + prop + '": {';
+      examples[prop] = obj[prop];
       conversorSelection(obj[prop]);
       outSwagger += indentator + "},";
       // ---- End property type scope ----
@@ -182,6 +179,12 @@ function convert() {
       // No property inserted
       outSwagger += " }";
     }
+    // ---- Begin example scope ----
+    if (document.getElementById("requestExamples").checked) {
+      outSwagger += ","
+      outSwagger += indentator + '"example": ' + JSON.stringify(examples).replaceAll('\n', indentator);
+    }
+    // ---- End example scope ----
   }
 
   function format(value, yaml) {
@@ -234,4 +237,3 @@ function convert() {
     document.getElementById("yamlOut").checked
   );
 }
-
